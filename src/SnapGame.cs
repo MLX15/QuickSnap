@@ -1,0 +1,110 @@
+using System;
+using SwinGameSDK;
+using CardGames.GameLogic;
+
+namespace CardGames
+{
+    public class SnapGame
+    {
+        public static void LoadResources()
+        {
+            Bitmap cards;
+            cards = SwinGame.LoadBitmapNamed ("Cards", "Cards.png");
+            SwinGame.BitmapSetCellDetails (cards, 82, 110, 13, 5, 53);      // set the cells in the bitmap to match the cards
+			SwinGame.LoadFontNamed ("Gamefont", "chunkfive.otf", 24);
+        }
+
+		/// <summary>
+		/// Respond to the user input -- with requests affecting myGame
+		/// </summary>
+		/// <param name="myGame">The game object to update in response to events.</param>
+		private static void HandleUserInput(Snap myGame)
+		{
+			//Fetch the next batch of UI interaction
+			SwinGame.ProcessEvents();
+
+			if (SwinGame.KeyTyped (KeyCode.vk_SPACE))
+			{
+				myGame.Start ();
+			}
+
+			if (myGame.IsStarted) {
+
+				if (SwinGame.KeyTyped (KeyCode.vk_LSHIFT) && SwinGame.KeyTyped (KeyCode.vk_RSHIFT)) {
+					SwinGame.LoadSoundEffectNamed ("Collide", "collide.wav");
+					SwinGame.PlaySoundEffect ("Collide");
+
+				} else if (SwinGame.KeyTyped (KeyCode.vk_LSHIFT)) {
+					myGame.PlayerHit (0);
+					SwinGame.LoadSoundEffectNamed ("Snap", "snapping.wav");
+					SwinGame.PlaySoundEffect ("Snap");
+
+				} else if (SwinGame.KeyTyped (KeyCode.vk_RSHIFT)) {
+					myGame.PlayerHit (1);
+					SwinGame.LoadSoundEffectNamed ("Break", "break.wav");
+					SwinGame.PlaySoundEffect ("Break");
+				}
+			}
+		}
+
+		/// <summary>
+		/// Draws the game to the Window.
+		/// </summary>
+		/// <param name="myGame">The details of the game -- mostly top card and scores.</param>
+		private static void DrawGame(Snap myGame)
+		{
+			SwinGame.DrawBitmap("cardsBoard.png", 0, 0);
+			SwinGame.DrawText ("" + myGame.Score (0), Color.Black, "Gamefont", 0, 40);
+			SwinGame.DrawText ("" + myGame.Score (1), Color.Black, "Gamefont", 665, 40);
+
+			// Draw the top card
+			Card top = myGame.TopCard;
+			if (top != null)
+			{
+				SwinGame.DrawText ("Top Card is " + top.ToString (), Color.Black,"Gamefont", 325, 0);
+				SwinGame.DrawText ("Player 1 score: " + myGame.Score(0), Color.Black,"Gamefont", 0, 20);
+				SwinGame.DrawText ("Player 2 score: " + myGame.Score(1), Color.Black,"Gamefont", 665, 20);
+				SwinGame.DrawCell (SwinGame.BitmapNamed ("Cards"), top.CardIndex, 570, 223);
+			}
+			else
+			{
+				SwinGame.DrawText ("No card played yet...", Color.Black,"Gamefont", 0, 0);
+			}
+
+			// Draw the back of the cards... to represent the deck
+			SwinGame.DrawCell (SwinGame.BitmapNamed ("Cards"), 52, 200, 225);
+
+			//Draw onto the screen
+			SwinGame.RefreshScreen(60);
+		}
+
+		/// <summary>
+		/// Updates the game -- it should flip the cards itself once started!
+		/// </summary>
+		/// <param name="myGame">The game to be updated...</param>
+		private static void UpdateGame(Snap myGame)
+		{
+			myGame.Update(); // just ask the game to do this...
+		}
+
+        public static void Main()
+        {
+            //Open the game window
+            SwinGame.OpenGraphicsWindow("Snap!", 860, 500);
+
+			//Load the card images and set their cell details
+            LoadResources();
+            
+			// Create the game!
+			Snap myGame = new Snap ();
+
+            //Run the game loop
+            while(false == SwinGame.WindowCloseRequested())
+            {
+				HandleUserInput (myGame);
+				DrawGame (myGame);
+				UpdateGame (myGame);
+            }
+        }
+    }
+}
